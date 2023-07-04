@@ -392,18 +392,22 @@ function pre_checking()
         echo "Not code"
         exit 1
     elif [[ "${METHOD}" == "azure" ]];then
-        # Check if we miss credentials for http with cregs
-        FLAG_FOUND_AZ_CREDS="false"
 
-        pre_check_dependencies "az"
-        if [[ ${AZ_USER} != "" && ${AZ_PASSWORD} != "" ]];then
-            FLAG_FOUND_AZ_CREDS="true"
-        fi
+        if [[ "${URL_K8S_CONFIG}" != "none" ]];then
+            check_var "URL_USER URL_PASSWORD"
+        else
+            # Check if we miss credentials for http with cregs
+            FLAG_FOUND_AZ_CREDS="false"
+            pre_check_dependencies "az"
+            if [[ ${AZ_USER} != "" && ${AZ_PASSWORD} != "" ]];then
+                FLAG_FOUND_AZ_CREDS="true"
+            fi
 
-        if [[ "${FLAG_FOUND_AZ_CREDS}" == "false" ]];then
-            echo ""
-            echo -e "${RC}[x] CHECKING: cannot find AZ Credentials when you want to use Helm on Azure ACR to deploy K8S"
-            exit 1
+            if [[ "${FLAG_FOUND_AZ_CREDS}" == "false" ]];then
+                echo ""
+                echo -e "${RC}[x] CHECKING: cannot find AZ Credentials when you want to use Helm on Azure ACR to deploy K8S"
+                exit 1
+            fi
         fi
 
     fi
@@ -447,10 +451,6 @@ function kubernetes_auth_login() {
 
     [ -d ${HOME}/.kube ] && rm -rf ${HOME}/.kube
     mkdir ${HOME}/.kube
-
-    if [[ "${URL_K8S_CONFIG}" != "none" ]];then
-        check_var "URL_USER URL_PASSWORD"
-    fi
 
     # Proceed Kubernetes Authentication Login
     if [[ "${_SERVICE_PROVIDER}" == "digital-ocean" ]];then
