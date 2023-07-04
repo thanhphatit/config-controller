@@ -704,6 +704,7 @@ function build_k8s_apply_config(){
                         DEPLOY_NAME="${SERVICE_NAME}"
                     fi
 
+                    echo -e "${GC}We will restart pod to apply config..."
                     kubectl rollout restart ${POD_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
                 fi
                 
@@ -712,7 +713,7 @@ function build_k8s_apply_config(){
             k8s_apply_config
 
             function reconnect() {
-                RAMDOM_NUM=$((30 + $RANDOM % 90))
+                RAMDOM_NUM=$((20 + $RANDOM % 40))
                 echo "Server can't connect, we will waiting ${RAMDOM_NUM}s and auto try again."
                 sleep ${RAMDOM_NUM}
                 # We will remove old config k8s
