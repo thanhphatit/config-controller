@@ -29,8 +29,8 @@ set ${DEBUG};
 SCAN_ALL_FILES="${SCAN_ALL_FILES:-false}"
 
 URL_K8S_CONFIG="${URL_K8S_CONFIG:-none}"
-REPO_K8S_SECRET_DEV_NAME="pmc-infra-k8s-secrets-dev"
-NAMESPACE_ALLOW_DEV="pmc-development"
+
+RESTART_NS_BLACKLIST="${RESTART_NS_BLACKLIST:-none}"
 
 CURRENT_BRANCH="main"
 MAIN_BRANCH="main"
@@ -365,6 +365,7 @@ function pre_checking()
     echo "[+] ACTION: ${ACTION}"
     echo "[+] METHOD: ${METHOD}"
 
+    pre_check_dependencies "helm"
     # Check if we miss credentials for AWS S3 Plugin
     if [[ "${METHOD}" == "aws" ]];then
         generate_aws_credentials
@@ -669,7 +670,10 @@ function build_k8s_apply_config(){
             SERVICE_NAME=$(echo $directory | awk -F/ '{print $NF}' | tr -d ' ')
             PATH_FILE=$(ls -d "$directory"/* | head -n1)
             NAMESPACE=$(cat ${PATH_FILE} | grep -i "namespace" | awk -F':' '{print $2}' | head -n1 | tr -d ' ')
-            POD_NAME=$(kubectl get pods -n $NAMESPACE -o=name | grep $SERVICE_NAME | sed "s/^.\{4\}//")
+            POD_NAME=$(kubectl get pods -n ${NAMESPACE} -l="nameRelease=${SERVICE_NAME}" -o=name | sed "s/^.\{4\}//")
+            if [[ ${POD_NAME} == "null" ]];then
+                POD_NAME=$(kubectl get pods -n $NAMESPACE -o=name | grep $SERVICE_NAME | sed "s/^.\{4\}//")
+            fi
             
             echo "We are running on namespace: $NAMESPACE"
 
@@ -680,22 +684,26 @@ function build_k8s_apply_config(){
                 kubectl replace -f ${directory}
                 
                 local POD_RESTART="true"
-                check_var "RESTART_NS_BLACKLIST"
 
-                for ns in ${RESTART_NS_BLACKLIST[@]}; do
-                    if [[ "${NAMESPACE}" == ${ns} ]];then
-                        POD_RESTART="false"
-                    fi
-                done
+                if [[ ${RESTART_NS_BLACKLIST} != none ]];then
+                    for ns in ${RESTART_NS_BLACKLIST[@]}; do
+                        if [[ "${NAMESPACE}" == ${ns} ]];then
+                            POD_RESTART="false"
+                        fi
+                    done
+                fi
 
                 # Restart deploys
                 if [[ ${POD_RESTART} == "true" ]];then
-                    echo ${SERVICE_NAME}
-                    echo ${PATH_FILE}
-                    echo ${NAMESPACE}
-                    echo ${POD_NAME}
+
                     POD_KIND=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].kind}')
-                    # kubectl rollout restart ${POD_KIND} -n ${NAMESPACE} ${SERVICE_NAME}
+                    DEPLOY_NAME=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].name}')
+
+                    if [[ ${DEPLOY_NAME} == "" ]];then
+                        DEPLOY_NAME="${SERVICE_NAME}"
+                    fi
+
+                    kubectl rollout restart ${POD_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
                 fi
                 
             }
