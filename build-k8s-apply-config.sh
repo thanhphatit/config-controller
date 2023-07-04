@@ -675,7 +675,7 @@ function build_k8s_apply_config(){
                 POD_NAME=$(kubectl get pods -n $NAMESPACE -o=name | grep $SERVICE_NAME | sed "s/^.\{4\}//")
             fi
             
-            echo "We are running on namespace: $NAMESPACE"
+            echo "We are running on namespace: ${NAMESPACE}"
 
             function k8s_apply_config() {
                 # Apply kubectl
@@ -689,6 +689,7 @@ function build_k8s_apply_config(){
                     for ns in ${RESTART_NS_BLACKLIST[@]}; do
                         if [[ "${NAMESPACE}" == ${ns} ]];then
                             POD_RESTART="false"
+                            echo -e "${YC}[CAUTIONS] This pod: "${POD_NAME}" running on namespace in blacklist."
                         fi
                     done
                 fi
