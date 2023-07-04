@@ -365,7 +365,6 @@ function pre_checking()
     echo "[+] ACTION: ${ACTION}"
     echo "[+] METHOD: ${METHOD}"
 
-    pre_check_dependencies "helm"
     # Check if we miss credentials for AWS S3 Plugin
     if [[ "${METHOD}" == "aws" ]];then
         generate_aws_credentials
