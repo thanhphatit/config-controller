@@ -690,8 +690,12 @@ function build_k8s_apply_config(){
 
                 # Restart deploys
                 if [[ ${POD_RESTART} == "true" ]];then
+                    echo ${SERVICE_NAME}
+                    echo ${PATH_FILE}
+                    echo ${NAMESPACE}
+                    echo ${POD_NAME}
                     POD_KIND=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].kind}')
-                    kubectl rollout restart ${POD_KIND} -n ${NAMESPACE} ${SERVICE_NAME}
+                    # kubectl rollout restart ${POD_KIND} -n ${NAMESPACE} ${SERVICE_NAME}
                 fi
                 
             }
