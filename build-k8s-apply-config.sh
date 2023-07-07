@@ -712,7 +712,7 @@ function build_k8s_apply_config(){
                 # Restart deploys
                 if [[ ${POD_RESTART} == "true" ]];then
 
-                    DEPLOY_KIND=$(check_deploy_kind "StatefulSet deployment daemonset" "${NAMESPACE}" "${SERVICE_NAME}")
+                    DEPLOY_KIND=$(check_deploy_kind "StatefulSet Deployment DaemonSet" "${NAMESPACE}" "${SERVICE_NAME}")
 
                     if [[ ${DEPLOY_KIND} == "StatefulSet" ]];then
                         DEPLOY_KIND=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].kind}')
@@ -720,7 +720,7 @@ function build_k8s_apply_config(){
                     else
                         DEPLOY_NAME="${SERVICE_NAME}"
                     fi
-
+                    echo ""
                     echo -e "${GC}We will restart [${DEPLOY_NAME}] with kind [${DEPLOY_KIND}] and namespace [${NAMESPACE}] to apply config..."
                     kubectl rollout restart ${DEPLOY_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
                 fi
