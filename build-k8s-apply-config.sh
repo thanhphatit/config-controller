@@ -700,7 +700,7 @@ function build_k8s_apply_config(){
                 
                 local POD_RESTART="true"
 
-                if [[ ${RESTART_NS_BLACKLIST} != none ]];then
+                if [[ ${RESTART_NS_BLACKLIST} != "none" ]];then
                     for ns in ${RESTART_NS_BLACKLIST[@]}; do
                         if [[ "${NAMESPACE}" == ${ns} ]];then
                             POD_RESTART="false"
