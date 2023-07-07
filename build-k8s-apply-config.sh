@@ -617,6 +617,22 @@ function get_unique_list_providers(){
     cat ${TMPFILE_LIST_YAML} | awk -F'/' '{print $1 "/" $2 "/" $3 "/" $4}' | sort | uniq > ${TMPFILE_LIST_PROVIDERS}
 }
 
+function check_deploy_kind(){
+    local DEPLOY_KIND_LIST=(${1})
+    local NAMESPACE="${2}"
+    local SERVICE_RELEASE_NAME="${3}"
+
+    check_var "NAMESPACE SERVICE_RELEASE_NAME"
+
+    for kind in ${DEPLOY_KIND_LIST[@]}; do
+        if [[ $(kubectl get ${kind} -n ${NAMESPACE} 2>/dev/null | awk '{print $1}' | grep -i "^${SERVICE_RELEASE_NAME}$") ]];then
+            echo "${kind}"
+        fi
+    done
+
+    #### Example: check_deploy_kind "statefulset deployment daemonset" "${NAMESPACE}" "${SERVICE_RELEASE_NAME}"
+}
+
 function build_k8s_apply_config(){
     # Process each cloud provider service
     while read line
@@ -696,16 +712,17 @@ function build_k8s_apply_config(){
                 # Restart deploys
                 if [[ ${POD_RESTART} == "true" ]];then
 
-                    POD_KIND=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].kind}')
-                    DEPLOY_NAME=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].name}')
+                    DEPLOY_KIND=$(check_deploy_kind "StatefulSet deployment daemonset" "${NAMESPACE}" "${SERVICE_NAME}")
 
-                    echo "${POD_NAME} - ${NAMESPACE} - ${POD_KIND} - ${DEPLOY_NAME}"
-                    if [[ ${DEPLOY_NAME} == "" ]];then
+                    if [[ ${DEPLOY_KIND} == "StatefulSet" ]];then
+                        DEPLOY_KIND=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].kind}')
+                        DEPLOY_NAME=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].name}')
+                    else
                         DEPLOY_NAME="${SERVICE_NAME}"
                     fi
 
-                    echo -e "${GC}We will restart pod to apply config..."
-                    kubectl rollout restart ${POD_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
+                    echo -e "${GC}We will restart [${DEPLOY_NAME}] with kind [${DEPLOY_KIND}] and namespace [${NAMESPACE}] to apply config..."
+                    kubectl rollout restart ${DEPLOY_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
                 fi
                 
             }
