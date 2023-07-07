@@ -699,6 +699,7 @@ function build_k8s_apply_config(){
                     POD_KIND=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].kind}')
                     DEPLOY_NAME=$(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.ownerReferences[0].name}')
 
+                    echo "${POD_NAME} - ${NAMESPACE} - ${POD_KIND} - ${DEPLOY_NAME}"
                     if [[ ${DEPLOY_NAME} == "" ]];then
                         DEPLOY_NAME="${SERVICE_NAME}"
                     fi
