@@ -776,13 +776,13 @@ function main(){
         pre_check_dependencies "kubectl"
 
         ### Pre-checking
-        # pre_checking
+        pre_checking
         
-        # get_all_list_defined_yaml
+        get_all_list_defined_yaml
 
-        # get_unique_list_providers
+        get_unique_list_providers
 
-        # build_k8s_apply_config
+        build_k8s_apply_config
         ;;
     esac
 
