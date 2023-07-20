@@ -146,7 +146,7 @@ cat <<ABOUT
 * Author: DANG THANH PHAT                               *
 * Email: thanhphat@itblognote.com                       *
 * Blog: www.itblognote.com                              *
-* Version: 1.5                                          *
+* Version: 1.6                                          *
 * Purpose: Tools to deploy secrets or configmaps to k8s *
 *********************************************************
 
