@@ -34,6 +34,7 @@ RESTART_NS_BLACKLIST="${RESTART_NS_BLACKLIST:-none}"
 
 CURRENT_BRANCH="main"
 MAIN_BRANCH="main"
+echo "CURRENT_BRANCH: ${CURRENT_BRANCH} - MAIN_BRANCH: ${MAIN_BRANCH}"
 
 #TMPFILE_LIST_YAML=$(mktemp /tmp/tempfile-list-yaml-XXXXXXXX)
 TMPFILE_LIST_YAML=$(mktemp /tmp/tempfile-list-yaml-XXXXXXXX)
