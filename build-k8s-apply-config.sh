@@ -724,6 +724,8 @@ function build_k8s_apply_config(){
                     if [[ ${DEPLOY_NAME} != "" && ${DEPLOY_KIND} != "" && ${NAMESPACE} != "" ]];then
                         echo -e "${GC}We will restart [${DEPLOY_NAME}] with kind [${DEPLOY_KIND}] and namespace [${NAMESPACE}] to apply config..."
                         kubectl rollout restart ${DEPLOY_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
+                    else
+                        echo -e "${YC}We can not find full [variable] so can not auto restart, you can restart hand, please!"
                     fi
                 fi
                 
