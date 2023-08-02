@@ -682,17 +682,37 @@ function build_k8s_apply_config(){
         while read directory
         do
             echo "[+] Apply & replace secrets/configmap in this directory: ${directory}"
-            SERVICE_NAME=$(echo $directory | awk -F/ '{print $NF}' | tr -d ' ')
-            PATH_FILE=$(ls -d "$directory"/* | head -n1)
+            DELETE_LOCK="${directory}/delete.lock"
+            SERVICE_NAME=$(echo ${directory} | awk -F/ '{print $NF}' | tr -d ' ')
+            PATH_FILE=$(ls -d "${directory}"/*.yaml | head -n1)
             NAMESPACE=$(cat ${PATH_FILE} | grep -i "namespace" | awk -F':' '{print $2}' | head -n1 | tr -d ' ')
+            KIND=$(cat ${PATH_FILE} | grep -i "kind" | awk -F':' '{print $2}' | head -n1 | tr -d ' ')
+            NAME=$(cat ${PATH_FILE} | grep -i "name" | awk -F':' '{print $2}' | head -n1 | tr -d ' ')
             POD_NAME=$(kubectl get pods -n ${NAMESPACE} -l="nameRelease=${SERVICE_NAME}" -o=name | sed "s/^.\{4\}//")
             if [[ ${POD_NAME} == "null" ]];then
                 POD_NAME=$(kubectl get pods -n $NAMESPACE -o=name | grep $SERVICE_NAME | sed "s/^.\{4\}//")
             fi
             
-            echo "We are running on namespace: ${NAMESPACE}"
+            # General process
+            if [[ -f ${DELETE_LOCK} ]];then
+                DELETE_MODE="true"
+            else
+                DELETE_MODE="false"
+            fi
 
             function k8s_apply_config() {
+                
+                if [[ "${DELETE_MODE}" == "true" ]];then
+                    if [[ "${KIND}" != "" && "${NAMESPACE}" != "" && "${NAME}" != "" ]];then
+                        if [[ $(kubectl get ${KIND} -n ${NAMESPACE} | grep -i "${NAME}") ]];then
+                            kubectl delete -f ${directory}/*.yaml
+                        fi
+                    fi
+
+                    continue
+                fi
+
+                echo "We are running on namespace: ${NAMESPACE}"
                 # Apply kubectl
                 kubectl apply -f ${directory}
                 # Replace kubectl, save time, we comment this command
@@ -725,7 +745,7 @@ function build_k8s_apply_config(){
                         echo -e "${GC}We will restart [${DEPLOY_NAME}] with kind [${DEPLOY_KIND}] and namespace [${NAMESPACE}] to apply config..."
                         kubectl rollout restart ${DEPLOY_KIND} -n ${NAMESPACE} ${DEPLOY_NAME}
                     else
-                        echo -e "${YC}I can't restart this application, please restart manually!"
+                        echo -e "${YC}I can't restart this app or it's not app, if it's app you should restart manually, please!"
                     fi
                 fi
                 
